@@ -17,32 +17,9 @@ import useStyles from './styles'
 
 const List = () => {
   const classes = useStyles()
-  const {deleteTransaction} = useContext(ExpenseTrackerContext)
+  const {deleteTransaction, transactions} = useContext(ExpenseTrackerContext)
 
 
-  const transactions = [
-    {
-      id: 1,
-      type: 'Income',
-      category: 'Salary',
-      amount: 50,
-      date: 'Tue Aug 02 2022',
-    },
-    {
-      id: 2,
-      type: 'Expense',
-      category: 'Weed',
-      amount: 50,
-      date: 'Tue Aug 02 2022',
-    },
-    {
-      id: 3,
-      type: 'Income',
-      category: 'Salary',
-      amount: 50,
-      date: 'Tue Aug 02 2022',
-    },
-  ]
 
   return (
     <MUIList dense={false} className={classes.list}>
