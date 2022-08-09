@@ -10,12 +10,15 @@ import {
   MenuItem,
 } from '@material-ui/core'
 import { ExpenseTrackerContext } from '../../../context/context'
-import {incomeCategories, expenseCategories} from '../../../constants/categories'
+import {
+  incomeCategories,
+  expenseCategories,
+} from '../../../constants/categories'
 import { useSpeechContext } from '@speechly/react-client'
 
 import formatDate from '../../../utils/formatDate'
 import useStyles from './styles'
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 const initialState = {
@@ -31,11 +34,52 @@ const Form = () => {
   const { addTransaction } = useContext(ExpenseTrackerContext)
   const { segment } = useSpeechContext()
 
+  useEffect(() => {
+    if (segment) {
+      if (segment.intent.intent === 'add_expense') {
+        setFormData({ ...formData, type: 'Expense' })
+      } else if (segment.intent.intent === 'add_income') {
+        setFormData({ ...formData, type: 'Income' })
+      } else if (
+        segment.isFinal &&
+        segment.intent.intent === 'create_transaction'
+      ) {
+        return createTransaction()
+      } else if (
+        segment.isFinal &&
+        segment.intent.intent === 'cancel_transaction'
+      ) {
+        setFormData(initialState)
+      }
+
+      segment.entities.forEach((entity) => {
+        // console.log(entity.value)
+
+        //solo lettera iniziale maiuscola ed il resto minuscolo
+        const category = `${entity.value.charAt(0)}${entity.value.slice(1).toLowerCase()}`
+        console.log(category)
+
+        switch (entity.type) {
+          case 'amount':
+            setFormData({ ...formData, amount: entity.value })
+            break
+          case 'category':
+            setFormData({ ...formData, category: category })
+            // entity.value viene estratto tutto in maiuscolo, mentre i valori sono salvati con solo prima lettera maiuscola (Business, Salary ecc)
+            break
+          case 'date':
+            setFormData({ ...formData, date: entity.value })
+            break
+        }
+      })
+    }
+  }, [segment])
+
   const createTransaction = () => {
     const transaction = {
       ...formData,
       amount: Number(formData.amount),
-      id: uuidv4()
+      id: uuidv4(),
     }
 
     addTransaction(transaction)
@@ -43,18 +87,14 @@ const Form = () => {
     setFormData(initialState)
   }
 
-  const selectedCategories = formData.type === 'Income' ? incomeCategories : expenseCategories
-
+  const selectedCategories =
+    formData.type === 'Income' ? incomeCategories : expenseCategories
 
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
         <Typography align='center' variant='subtitle2' gutterBottom>
-          {segment && (
-            <>
-              {segment.words.map((w) => w.value).join(" ")}
-            </>
-          )}
+          {segment && <>{segment.words.map((w) => w.value).join(' ')}</>}
         </Typography>
       </Grid>
       <Grid item xs={6}>
@@ -79,7 +119,9 @@ const Form = () => {
             }
           >
             {selectedCategories.map((category) => (
-              <MenuItem key={category.type} value={category.type}>{category.type}</MenuItem>
+              <MenuItem key={category.type} value={category.type}>
+                {category.type}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -99,7 +141,9 @@ const Form = () => {
           label='Date'
           fullWidth
           value={formData.date}
-          onChange={(e) => setFormData({ ...formData, date: formatDate(e.target.value) })}
+          onChange={(e) =>
+            setFormData({ ...formData, date: formatDate(e.target.value) })
+          }
         />
       </Grid>
       <Button
