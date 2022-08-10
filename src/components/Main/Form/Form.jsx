@@ -76,6 +76,10 @@ const Form = () => {
             break
         }
       })
+
+      if(segment.isFinal && formData.type && formData.category && formData.amount !== '' && formData.date) {
+        createTransaction()
+      }
     }
   }, [segment])
 
