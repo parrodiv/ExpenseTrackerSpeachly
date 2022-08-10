@@ -64,8 +64,12 @@ const Form = () => {
             setFormData({ ...formData, amount: entity.value })
             break
           case 'category':
-            setFormData({ ...formData, category: category })
-            // entity.value viene estratto tutto in maiuscolo, mentre i valori sono salvati con solo prima lettera maiuscola (Business, Salary ecc)
+            if(incomeCategories.map(iC => iC.type).includes(category)) {
+              setFormData({ ...formData, type:'Income', category: category })
+              // entity.value viene estratto tutto in maiuscolo, mentre i valori sono salvati con solo prima lettera maiuscola (Business, Salary ecc)
+            } else if (expenseCategories.map(iC => iC.type).includes(category)) {
+              setFormData({ ...formData, type:'Expense', category:category})
+            }
             break
           case 'date':
             setFormData({ ...formData, date: entity.value })
