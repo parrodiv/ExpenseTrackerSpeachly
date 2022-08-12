@@ -20,6 +20,7 @@ import formatDate from '../../../utils/formatDate'
 import useStyles from './styles'
 import { useState, useContext, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
+import CustomizedSnackbar from '../../Snackbar/Snackbar'
 
 const initialState = {
   amount: '',
@@ -33,6 +34,25 @@ const Form = () => {
   const [formData, setFormData] = useState(initialState)
   const { addTransaction } = useContext(ExpenseTrackerContext)
   const { segment } = useSpeechContext()
+  const [open, setOpen] = useState(false)
+
+  const createTransaction = () => {
+    if (Number.isNaN(Number(formData.amount)) || !formData.date.includes('-'))
+      return
+    if (formData.amount === '' || formData.category === '') return
+
+    const transaction = {
+      ...formData,
+      amount: Number(formData.amount),
+      id: uuidv4(),
+    }
+
+    setOpen(true)
+
+    addTransaction(transaction)
+    // reset state
+    setFormData(initialState)
+  }
 
   useEffect(() => {
     if (segment) {
@@ -56,7 +76,9 @@ const Form = () => {
         // console.log(entity.value)
 
         //solo lettera iniziale maiuscola ed il resto minuscolo
-        const category = `${entity.value.charAt(0)}${entity.value.slice(1).toLowerCase()}`
+        const category = `${entity.value.charAt(0)}${entity.value
+          .slice(1)
+          .toLowerCase()}`
         console.log(category)
 
         switch (entity.type) {
@@ -64,43 +86,41 @@ const Form = () => {
             setFormData({ ...formData, amount: entity.value })
             break
           case 'category':
-            if(incomeCategories.map(iC => iC.type).includes(category)) {
-              setFormData({ ...formData, type:'Income', category: category })
+            if (incomeCategories.map((iC) => iC.type).includes(category)) {
+              setFormData({ ...formData, type: 'Income', category: category })
               // entity.value viene estratto tutto in maiuscolo, mentre i valori sono salvati con solo prima lettera maiuscola (Business, Salary ecc)
-            } else if (expenseCategories.map(iC => iC.type).includes(category)) {
-              setFormData({ ...formData, type:'Expense', category:category})
+            } else if (
+              expenseCategories.map((iC) => iC.type).includes(category)
+            ) {
+              setFormData({ ...formData, type: 'Expense', category: category })
             }
             break
           case 'date':
             setFormData({ ...formData, date: entity.value })
             break
+          default:
+            break
         }
       })
 
-      if(segment.isFinal && formData.type && formData.category && formData.amount !== '' && formData.date) {
+      if (
+        segment.isFinal &&
+        formData.type &&
+        formData.category !== '' &&
+        formData.amount !== '' &&
+        formData.date
+      ) {
         createTransaction()
       }
     }
   }, [segment])
-
-  const createTransaction = () => {
-    if(Number.isNaN(Number(formData.amount)) || !formData.date.includes('-')) return
-    const transaction = {
-      ...formData,
-      amount: Number(formData.amount),
-      id: uuidv4(),
-    }
-
-    addTransaction(transaction)
-    // reset state
-    setFormData(initialState)
-  }
 
   const selectedCategories =
     formData.type === 'Income' ? incomeCategories : expenseCategories
 
   return (
     <Grid container spacing={2}>
+      <CustomizedSnackbar open={open} setOpen={setOpen} />
       <Grid item xs={12}>
         <Typography align='center' variant='subtitle2' gutterBottom>
           {segment && <>{segment.words.map((w) => w.value).join(' ')}</>}
